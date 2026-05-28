@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Defense Against the Dark Arts: Shield Rush</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    html, body {
+      margin: 0; padding: 0;
+      background: #04040f;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh;
+      font-family: 'Crimson Pro', serif;
+    }
+    #sr-wrap {
+      width: 100%;
+      max-width: 680px;
+      min-height: 620px;
+      position: relative;
+    }
+
+    /* ── Reset & Base ── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    #sr-root {
+      width: 100%; min-height: 620px;
+      background: #07071a;
+      font-family: 'Crimson Pro', serif;
+      color: #e8d5a3;
+      position: relative; overflow: hidden;
+      border-radius: 14px;
+      user-select: none;
+      box-shadow: 0 0 60px rgba(100, 60, 200, 0.3);
+    }
+
+    /* ── Stars ── */
+    .sr-star { position: absolute; background: #fff; border-radius: 50%; animation: srTwinkle 3s infinite alternate; pointer-events: none; }
+    @keyframes srTwinkle { from { opacity: .1; } to { opacity: .85; } }
+
+    /* ── Screens ── */
+    .sr-screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; animation: srFadeIn .5s ease; }
+    .sr-screen.hidden { display: none !important; }
+    @keyframes srFadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── Animations ── */
+    @keyframes srShake { 0%,100%{transform:translateX(0)} 15%{transform:translateX(-10px)} 35%{transform:translateX(10px)} 55%{transform:translateX(-7px)} 75%{transform:translateX(7px)} }
+    @keyframes srFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+    @keyframes srPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
+    @keyframes srWrongCard { 0%,100%{transform:scale(1) translateX(0)} 25%{transform:scale(1.08) translateX(-7px)} 75%{transform:scale(1.08) translateX(7px)} }
+    @keyframes srSpellFly { from{transform:translateX(0) scale(1);opacity:1} to{transform:translateX(-520px) scale(.7);opacity:0} }
+    @keyframes srSpellHit { 0%{opacity:0;transform:scale(.4)} 40%{opacity:1;transform:scale(1.5)} 100%{opacity:0;transform:scale(.8)} }
+    @keyframes srShieldPop { 0%{opacity:0;transform:scale(.3) rotate(-15deg)} 55%{opacity:1;transform:scale(1.25) rotate(4deg)} 100%{opacity:.95;transform:scale(1) rotate(0)} }
+    @keyframes srShieldBurst { 0%{opacity:.7;transform:scale(.5)} 100%{opacity:0;transform:scale(2.5)} }
+    @keyframes srBlockedMsg { 0%{opacity:0;transform:translateY(10px) scale(.8)} 40%{opacity:1;transform:translateY(-4px) scale(1.1)} 100%{opacity:0;transform:translateY(-24px) scale(1)} }
+    @keyframes srHitFlash { 0%{filter:brightness(1)} 40%{filter:brightness(4) saturate(2) hue-rotate(-30deg)} 100%{filter:brightness(1)} }
+    @keyframes srTimerUrgent { 0%,100%{box-shadow:none} 50%{box-shadow:0 0 18px 4px rgba(255,40,40,.8)} }
+    @keyframes srGlow { 0%,100%{text-shadow:0 0 10px rgba(100,180,255,.4)} 50%{text-shadow:0 0 30px rgba(100,180,255,1),0 0 60px rgba(100,180,255,.6)} }
+    @keyframes srSpellWord { 0%{opacity:0;transform:translateX(-50%) translateY(10px) scale(.6)} 40%{opacity:1;transform:translateX(-50%) translateY(-4px) scale(1.1)} 70%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)} 100%{opacity:0;transform:translateX(-50%) translateY(-16px) scale(.9)} }
+
+    /* ── HUD ── */
+    .sr-hud { position: absolute; top: 0; left: 0; right: 0; padding: 7px 14px; display: flex; align-items: center; gap: 8px; background: rgba(0,0,6,.65); border-bottom: 1px solid rgba(245,200,66,.18); z-index: 20; flex-wrap: wrap; }
+    .sr-hud-item { font-family: 'Cinzel', serif; font-size: .68rem; color: #c9a84c; text-align: center; min-width: 48px; }
+    .sr-hud-val { font-size: .95rem; font-weight: 700; color: #f5c842; display: block; }
+    .sr-lives { display: flex; gap: 3px; align-items: center; font-size: 1.1rem; }
+    .sr-heart { transition: all .3s; }
+    .sr-heart.lost { opacity: .2; filter: grayscale(1); }
+
+    /* ── Timer ── */
+    .sr-big-timer { position: absolute; top: 42px; left: 50%; transform: translateX(-50%); font-family: 'Cinzel', serif; font-size: 1.7rem; font-weight: 900; color: #f5c842; z-index: 12; min-width: 64px; text-align: center; text-shadow: 0 0 12px rgba(245,200,66,.5); transition: color .15s; }
+    .sr-big-timer.danger { color: #ff2020; animation: srTimerUrgent .35s ease-in-out infinite; text-shadow: 0 0 22px rgba(255,40,40,.9); }
+    .sr-timer-wrap { position: absolute; top: 36px; left: 14px; right: 14px; height: 5px; background: rgba(255,255,255,.08); border-radius: 3px; z-index: 11; }
+    .sr-timer-bar { height: 100%; border-radius: 3px; transition: width .07s linear; }
+    .sr-timer-bar.ok   { background: linear-gradient(90deg, #4aff4a, #f5c842); }
+    .sr-timer-bar.warn { background: linear-gradient(90deg, #ff8020, #ffcc00); }
+    .sr-timer-bar.danger { background: linear-gradient(90deg, #ff1010, #ff6020); animation: srTimerUrgent .3s ease-in-out infinite; }
+
+    /* ── Combo / Diff ── */
+    .sr-combo { position: absolute; top: 44px; right: 12px; font-family: 'Cinzel', serif; font-size: .68rem; color: #4aff4a; text-align: right; z-index: 12; }
+    .sr-combo-val { font-size: 1.1rem; font-weight: 700; }
+    .sr-diff { position: absolute; top: 44px; left: 12px; font-family: 'Cinzel', serif; font-size: .65rem; color: #a080c0; z-index: 12; }
+    .sr-diff-val { font-size: .85rem; font-weight: 700; color: #c080ff; }
+
+    /* ── Arena ── */
+    .sr-arena { position: absolute; top: 44px; left: 0; right: 0; bottom: 0; overflow: hidden; }
+    .sr-ground { position: absolute; bottom: 0; left: 0; right: 0; height: 52px; background: linear-gradient(180deg, #120a28, #080418); border-top: 2px solid rgba(110,60,200,.35); }
+
+    /* ── Characters ── */
+    .sr-player { position: absolute; bottom: 52px; left: 44px; font-size: 2.8rem; line-height: 1; animation: srFloat 2.4s ease-in-out infinite; z-index: 8; transition: filter .25s; }
+    .sr-player.hit { animation: srHitFlash .5s ease !important; }
+    .sr-enemy { position: absolute; bottom: 52px; right: 36px; font-size: 3.2rem; line-height: 1; z-index: 8; filter: grayscale(.25); }
+    .sr-enemy.casting { animation: srPulse .4s ease; }
+
+    /* ── Spell projectile ── */
+    .sr-spell-proj { position: absolute; z-index: 7; pointer-events: none; font-size: 1.6rem; animation: srSpellFly var(--dur, .9s) linear forwards; }
+    .sr-atk-lbl { position: absolute; z-index: 7; pointer-events: none; font-family: 'Cinzel', serif; font-size: .7rem; color: #ff9060; animation: srSpellFly var(--dur, .9s) linear forwards; white-space: nowrap; }
+
+    /* ── Hit / Shield ── */
+    .sr-hit-burst { position: absolute; left: 56px; z-index: 9; pointer-events: none; font-size: 3rem; animation: srSpellHit .55s ease forwards; }
+    .sr-shield-el { position: absolute; left: 20px; z-index: 9; pointer-events: none; font-size: 4rem; animation: srShieldPop .6s ease forwards; filter: drop-shadow(0 0 18px #4a9eff); }
+    .sr-shield-burst { position: absolute; left: 4px; z-index: 8; pointer-events: none; font-size: 5.5rem; animation: srShieldBurst .55s ease forwards; opacity: .6; }
+    .sr-result-msg { position: absolute; left: 50%; transform: translateX(-50%); z-index: 14; pointer-events: none; font-family: 'Cinzel', serif; font-size: 1.4rem; font-weight: 900; animation: srBlockedMsg .9s ease forwards; white-space: nowrap; }
+    .sr-defense-spell { position: absolute; left: 50%; z-index: 15; pointer-events: none; font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700; color: #a0e0ff; animation: srSpellWord 1.1s ease forwards; white-space: nowrap; text-shadow: 0 0 20px rgba(100,200,255,.9); }
+
+    /* ── Center Arrows ── */
+    .sr-arrows-wrap { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 13; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .sr-spell-label-small { font-family: 'Cinzel', serif; font-size: .7rem; color: #a08060; margin-bottom: 2px; text-align: center; }
+    .sr-arrows-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; max-width: 360px; }
+    .sr-arrow-card { width: 46px; height: 46px; background: rgba(14,18,58,.88); border: 2px solid rgba(80,120,220,.3); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 1.35rem; color: #3a4880; transition: all .12s; position: relative; }
+    .sr-arrow-card.done { background: rgba(30,120,200,.4); border-color: #60b8ff; color: #b0e4ff; }
+    .sr-arrow-card.done::after { content: '✓'; position: absolute; top: -7px; right: -7px; font-size: .6rem; background: #4aff9a; color: #002810; border-radius: 50%; width: 15px; height: 15px; display: flex; align-items: center; justify-content: center; line-height: 15px; font-weight: 900; }
+    .sr-arrow-card.active { background: rgba(74,158,255,.35); border-color: #c0e0ff; color: #fff; box-shadow: 0 0 18px rgba(74,158,255,.8); transform: scale(1.14); animation: srGlow .7s ease-in-out infinite; }
+    .sr-arrow-card.wrong { background: rgba(200,20,20,.75) !important; border-color: #ff3030 !important; color: #ffaaaa !important; animation: srWrongCard .32s ease !important; transform: scale(1) !important; box-shadow: 0 0 16px rgba(255,40,40,.7) !important; }
+
+    /* ── Event area ── */
+    .sr-event-area { position: absolute; bottom: 62px; left: 0; right: 0; text-align: center; z-index: 14; pointer-events: none; }
+    .sr-event-msg { font-family: 'Cinzel', serif; font-size: .85rem; min-height: 1.2em; }
+
+    /* ── Flash overlays ── */
+    .sr-flash { position: absolute; inset: 0; pointer-events: none; border-radius: 14px; opacity: 0; transition: opacity .12s; z-index: 18; }
+    .sr-flash-red   { background: rgba(255,0,0,.32); }
+    .sr-flash-blue  { background: rgba(74,158,255,.22); }
+    .sr-flash-green { background: rgba(0,220,100,.22); }
+
+    /* ── Edge ── */
+    .sr-edge { position: absolute; inset: 0; pointer-events: none; border-radius: 14px; transition: box-shadow .4s; }
+    .sr-edge.on { box-shadow: inset 0 0 40px rgba(255,30,30,.38), 0 0 0 3px rgba(255,40,40,.5); }
+
+    /* ── Result Card ── */
+    .sr-card { background: rgba(12,8,32,.97); border: 1px solid #f5c842; border-radius: 9px; padding: 20px; max-width: 460px; width: 100%; box-shadow: 0 0 40px rgba(245,200,66,.14); }
+    .sr-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(245,200,66,.1); font-size: .9rem; }
+    .sr-row:last-child { border: none; }
+    .sr-rl { color: #a08060; }
+    .sr-rv { color: #f5c842; font-weight: 600; }
+    .sr-grade { font-family: 'Cinzel', serif; font-size: 1.7rem; font-weight: 900; margin: 6px 0; }
+    .sr-trait { font-family: 'Cinzel', serif; font-size: .85rem; color: #a0d0ff; margin: 3px 0; }
+    .sr-desc { font-size: .82rem; color: #c9b090; margin-top: 5px; line-height: 1.65; }
+    .sr-btn { font-family: 'Cinzel', serif; background: linear-gradient(135deg, #1a0a00, #3a1e00); border: 1px solid #f5c842; color: #f5c842; padding: 10px 28px; font-size: .9rem; cursor: pointer; border-radius: 4px; transition: all .2s; margin-top: 14px; }
+    .sr-btn:hover { background: linear-gradient(135deg, #3a1e00, #5a3000); box-shadow: 0 0 20px rgba(245,200,66,.4); }
+  </style>
+</head>
+<body>
+<div id="sr-wrap">
+<div id="sr-root">
+  <!-- Stars (JS) -->
+  <div class="sr-flash sr-flash-red"   id="sr-flash-red"></div>
+  <div class="sr-flash sr-flash-blue"  id="sr-flash-blue"></div>
+  <div class="sr-flash sr-flash-green" id="sr-flash-green"></div>
+  <div class="sr-edge" id="sr-edge"></div>
+
+  <!-- ══ INTRO ══ -->
+  <div class="sr-screen" id="sr-intro">
+    <div style="font-family:'Cinzel',serif;font-size:1.6rem;font-weight:900;color:#f5c842;text-shadow:0 0 18px rgba(245,200,66,.6);text-align:center;line-height:1.3">
+      Defense Against<br>the Dark Arts
+    </div>
+    <div style="font-family:'Cinzel',serif;font-size:.85rem;color:#c9a84c;margin:8px 0 16px;text-align:center">
+      ⚡ Shield Rush · Survival Mode ⚡
+    </div>
+    <div style="font-size:.95rem;line-height:1.9;color:#d4b896;max-width:400px;text-align:center;margin-bottom:14px">
+      죽음을 먹는 자들이 끝없이 공격한다.<br>
+      방향키 조합으로 Protego를 완성해 막아라!<br>
+      목숨 5개를 모두 잃으면 Game Over.
+    </div>
+    <div style="font-family:'Cinzel',serif;font-size:.75rem;color:#7a6040;text-align:center;margin-bottom:16px;line-height:1.8">
+      ↑ ↓ ← → 방향키만 사용<br>
+      <span style="color:#ff6040">⚠ 성공할수록 패턴이 길어지고 시간이 짧아집니다</span>
+    </div>
+    <button class="sr-btn" onclick="srStart()">⚡ 결투 시작</button>
+  </div>
+
+  <!-- ══ GAME ══ -->
+  <div class="sr-screen hidden" id="sr-game" style="padding:0;justify-content:flex-start">
+    <div class="sr-hud">
+      <div class="sr-hud-item">점수<span class="sr-hud-val" id="sr-score">0</span></div>
+      <div class="sr-hud-item" style="flex:1;text-align:center">
+        <div class="sr-lives" id="sr-lives" style="justify-content:center">
+          <span class="sr-heart">❤️</span>
+          <span class="sr-heart">❤️</span>
+          <span class="sr-heart">❤️</span>
+          <span class="sr-heart">❤️</span>
+          <span class="sr-heart">❤️</span>
+        </div>
+      </div>
+      <div class="sr-hud-item">콤보<span class="sr-hud-val" id="sr-combo">×1</span></div>
+    </div>
+    <div class="sr-timer-wrap"><div class="sr-timer-bar ok" id="sr-tbar" style="width:100%"></div></div>
+    <div class="sr-big-timer" id="sr-btimer">3.0</div>
+    <div class="sr-diff" style="top:44px;left:12px">Lv<span class="sr-diff-val" id="sr-diff-val">1</span></div>
+    <div class="sr-combo" style="top:44px;right:12px">
+      <div style="font-size:.6rem;color:#4aff4a">콤보</div>
+      <div class="sr-combo-val" id="sr-combo-disp">×1</div>
+    </div>
+
+    <div class="sr-arena" id="sr-arena">
+      <div class="sr-player" id="sr-player">🧙</div>
+      <div class="sr-enemy"  id="sr-enemy">🧟</div>
+      <div class="sr-arrows-wrap" id="sr-arrows-wrap">
+        <div class="sr-spell-label-small" id="sr-atk-spell-lbl"></div>
+        <div class="sr-arrows-row" id="sr-arrows-row"></div>
+      </div>
+      <div class="sr-event-area"><div class="sr-event-msg" id="sr-event-msg"></div></div>
+      <div class="sr-ground"></div>
+    </div>
+  </div>
+
+  <!-- ══ RESULT ══ -->
+  <div class="sr-screen hidden" id="sr-result">
+    <div style="font-family:'Cinzel',serif;font-size:1.3rem;font-weight:900;color:#f5c842;margin-bottom:10px;text-align:center">🛡 결투 종료</div>
+    <div class="sr-card">
+      <div style="text-align:center;border-bottom:1px solid rgba(245,200,66,.2);padding-bottom:10px;margin-bottom:10px">
+        <div style="font-family:'Cinzel',serif;font-size:.75rem;color:#a08060">Defensive Magic</div>
+        <div class="sr-grade" id="sr-def-score">—</div>
+        <div class="sr-grade" style="font-size:.95rem" id="sr-grade-lbl"></div>
+        <div class="sr-trait" id="sr-trait"></div>
+        <div class="sr-desc"  id="sr-desc"></div>
+      </div>
+      <div id="sr-result-rows"></div>
+      <div style="text-align:center;margin-top:10px;font-family:'Cinzel',serif;font-size:.7rem;color:#f5c842;opacity:.6">
+        Hogwarts School of Witchcraft and Wizardry
+      </div>
+    </div>
+    <button class="sr-btn" onclick="srRestart()">⚡ 다시 도전</button>
+  </div>
+</div><!-- #sr-root -->
+</div><!-- #sr-wrap -->
+
+<script>
+// ─── Stars ───
+(function(){
+  const root = document.getElementById('sr-root');
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    s.className = 'sr-star';
+    const sz = Math.random() * 1.6 + .4;
+    s.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-delay:${Math.random()*3}s;animation-duration:${2+Math.random()*3}s`;
+    root.appendChild(s);
+  }
+})();
+
+// ─── Constants ───
+const ATK_SPELLS  = ['STUPEFY','SECTUMSEMPRA','REDUCTO','EXPULSO','INCENDIO','BOMBARDA','CONFRINGO'];
+const DEF_SPELLS  = ['Protego!','Protego Maxima!','Protego Totalum!','Salvio Hexia!'];
+const ARROWS      = ['↑','↓','←','→'];
+const ARROW_KEYS  = { ArrowUp:'↑', ArrowDown:'↓', ArrowLeft:'←', ArrowRight:'→' };
+const PROJ_EMOJIS = ['⚡','🔴','💜','🟣','🔥'];
+
+// ─── State ───
+const G = {
+  lives:5, score:0, combo:1, diff:1,
+  successBlocks:0, failedBlocks:0, maxCombo:1,
+  phase:'idle',
+  pattern:[], inputIdx:0,
+  roundTime:3, timerLeft:3,
+  raf:null, rafStart:0,
+  currentAtkSpell:'',
+};
+
+// ─── Helpers ───
+function flash(t, d=380) {
+  const e = document.getElementById('sr-flash-'+t);
+  e.style.opacity = '1';
+  setTimeout(() => e.style.opacity = '0', d);
+}
+function setMsg(txt, color='#f5c842', dur=1300) {
+  const e = document.getElementById('sr-event-msg');
+  if (!e) return;
+  e.textContent = txt; e.style.color = color;
+  clearTimeout(e._t);
+  e._t = setTimeout(() => { if (e.textContent === txt) e.textContent = ''; }, dur);
+}
+function shakeRoot() {
+  const r = document.getElementById('sr-root');
+  r.style.animation = 'srShake .45s ease';
+  setTimeout(() => r.style.animation = '', 450);
+}
+
+// ─── Difficulty params ───
+function getDiffParams(d) {
+  const len     = Math.min(4 + d, 12);
+  const time    = Math.max(1.6, 3.0 - (d-1) * .2);
+  const atkDur  = Math.max(.55, 1.1 - (d-1) * .07);
+  return { len, time, atkDur };
+}
+
+// ─── Pattern generation ───
+function genPattern(len) {
+  const p = [];
+  for (let i = 0; i < len; i++) {
+    let a, tries = 0;
+    do {
+      a = ARROWS[Math.floor(Math.random() * 4)]; tries++;
+    } while (tries < 20 && p.length >= 2 && p[p.length-1] === a && p[p.length-2] === a);
+    p.push(a);
+  }
+  return p;
+}
+
+// ─── Arrow UI ───
+function buildArrows() {
+  const row = document.getElementById('sr-arrows-row');
+  row.innerHTML = '';
+  G.pattern.forEach((a, i) => {
+    const d = document.createElement('div');
+    d.className = 'sr-arrow-card' + (i < G.inputIdx ? ' done' : i === G.inputIdx ? ' active' : '');
+    d.id = 'sr-ac-' + i;
+    d.textContent = a;
+    row.appendChild(d);
+  });
+}
+function refreshArrows() {
+  G.pattern.forEach((_, i) => {
+    const e = document.getElementById('sr-ac-' + i);
+    if (e) e.className = 'sr-arrow-card' + (i < G.inputIdx ? ' done' : i === G.inputIdx ? ' active' : '');
+  });
+}
+function wrongCardAnim() {
+  const e = document.getElementById('sr-ac-' + G.inputIdx);
+  if (e) e.className = 'sr-arrow-card wrong';
+  setTimeout(() => { G.inputIdx = 0; refreshArrows(); }, 380);
+}
+
+// ─── Timer (RAF) ───
+function startTimer() {
+  G.timerLeft = G.roundTime; G.rafStart = performance.now();
+  updateTimerUI();
+  G.raf = requestAnimationFrame(timerTick);
+}
+function timerTick(now) {
+  if (G.phase === 'input') {
+    const el = (now - G.rafStart) / 1000;
+    G.timerLeft = Math.max(0, G.roundTime - el);
+    updateTimerUI();
+    if (G.timerLeft <= 0) { onTimeFail(); return; }
+    G.raf = requestAnimationFrame(timerTick);
+  }
+}
+function stopTimer() { cancelAnimationFrame(G.raf); }
+function updateTimerUI() {
+  const pct = (G.timerLeft / G.roundTime) * 100;
+  const bar = document.getElementById('sr-tbar');
+  const big = document.getElementById('sr-btimer');
+  const danger = G.timerLeft <= 1;
+  const warn   = G.timerLeft <= G.roundTime * .4;
+  if (bar) { bar.style.width = pct + '%'; bar.className = 'sr-timer-bar ' + (danger ? 'danger' : warn ? 'warn' : 'ok'); }
+  if (big) { big.textContent = G.timerLeft.toFixed(1); big.className = 'sr-big-timer' + (danger ? ' danger' : ''); }
+}
+
+// ─── Projectile ───
+function launchProjectile(atkSpell, dur) {
+  const arena = document.getElementById('sr-arena');
+
+  const proj = document.createElement('div');
+  proj.className = 'sr-spell-proj';
+  proj.style.cssText = `right:110px;bottom:70px;--dur:${dur}s;animation:srSpellFly ${dur}s linear forwards`;
+  proj.textContent = PROJ_EMOJIS[Math.floor(Math.random() * PROJ_EMOJIS.length)];
+  arena.appendChild(proj);
+
+  const lbl = document.createElement('div');
+  lbl.className = 'sr-atk-lbl';
+  lbl.style.cssText = `right:110px;bottom:96px;--dur:${dur}s;animation:srSpellFly ${dur}s linear forwards`;
+  lbl.textContent = atkSpell;
+  arena.appendChild(lbl);
+
+  setTimeout(() => {
+    proj.parentNode && proj.parentNode.removeChild(proj);
+    lbl.parentNode  && lbl.parentNode.removeChild(lbl);
+  }, dur * 1000);
+}
+
+let projLoopId = null;
+function launchLoop(dur) {
+  clearTimeout(projLoopId);
+  if (G.phase === 'resolve') return;
+  launchProjectile(G.currentAtkSpell, dur);
+  projLoopId = setTimeout(() => { if (G.phase === 'input') launchLoop(dur); }, dur * 1000 + 200);
+}
+
+// ─── Success ───
+function onSuccess() {
+  stopTimer(); G.phase = 'resolve';
+  const timeLeft = G.timerLeft;
+  let pts = 100;
+  if (timeLeft > G.roundTime * .66) pts += 50;
+  else if (timeLeft > G.roundTime * .33) pts += 25;
+  else pts += 10;
+  const comboPts = G.combo > 1 ? [0,0,20,40,60,80,100][Math.min(G.combo, 6)] : 0;
+  pts += comboPts;
+  G.score += pts; G.successBlocks++; G.combo++;
+  G.maxCombo = Math.max(G.maxCombo, G.combo);
+  updateHUD();
+
+  const arena = document.getElementById('sr-arena');
+
+  const sh = document.createElement('div'); sh.className = 'sr-shield-el';
+  sh.style.bottom = '60px'; sh.textContent = '🛡'; arena.appendChild(sh);
+  const burst = document.createElement('div'); burst.className = 'sr-shield-burst';
+  burst.style.bottom = '50px'; burst.textContent = '✨'; arena.appendChild(burst);
+  setTimeout(() => {
+    sh.parentNode    && sh.parentNode.removeChild(sh);
+    burst.parentNode && burst.parentNode.removeChild(burst);
+  }, 700);
+
+  const dsw = DEF_SPELLS[Math.floor(Math.random() * DEF_SPELLS.length)];
+  const dse = document.createElement('div'); dse.className = 'sr-defense-spell';
+  dse.style.top = '38%'; dse.textContent = dsw; arena.appendChild(dse);
+  setTimeout(() => dse.parentNode && dse.parentNode.removeChild(dse), 1100);
+
+  const bm = document.createElement('div'); bm.className = 'sr-result-msg';
+  bm.style.cssText = 'top:28%;color:#4aff9a;text-shadow:0 0 18px rgba(74,255,150,.8)';
+  bm.textContent = 'Blocked! +' + pts; arena.appendChild(bm);
+  setTimeout(() => bm.parentNode && bm.parentNode.removeChild(bm), 900);
+
+  flash('blue', 400); flash('green', 250);
+  document.getElementById('sr-enemy').className = 'sr-enemy casting';
+  setTimeout(() => document.getElementById('sr-enemy').className = 'sr-enemy', 500);
+
+  if (G.successBlocks > 0 && G.successBlocks % 3 === 0) {
+    G.diff = Math.min(G.diff + 1, 12);
+    document.getElementById('sr-diff-val').textContent = G.diff;
+  }
+
+  setTimeout(nextRound, 950);
+}
+
+// ─── Failure (shared) ───
+function applyHit() {
+  G.lives--; G.score = Math.max(0, G.score - 50); G.failedBlocks++; G.combo = 1;
+  updateHUD(); updateLives();
+  shakeRoot(); flash('red', 700);
+
+  const arena = document.getElementById('sr-arena');
+  const hb = document.createElement('div'); hb.className = 'sr-hit-burst';
+  hb.style.bottom = '60px'; hb.textContent = '💥'; arena.appendChild(hb);
+  setTimeout(() => hb.parentNode && hb.parentNode.removeChild(hb), 580);
+
+  const hm = document.createElement('div'); hm.className = 'sr-result-msg';
+  hm.style.cssText = 'top:28%;color:#ff4040;text-shadow:0 0 18px rgba(255,40,40,.8)';
+  hm.textContent = 'Hit! -50pts'; arena.appendChild(hm);
+  setTimeout(() => hm.parentNode && hm.parentNode.removeChild(hm), 900);
+
+  document.getElementById('sr-player').className = 'sr-player hit';
+  setTimeout(() => document.getElementById('sr-player').className = 'sr-player', 520);
+  document.getElementById('sr-edge').className = 'sr-edge on';
+  setTimeout(() => document.getElementById('sr-edge').className = 'sr-edge', 700);
+}
+function onTimeFail() {
+  stopTimer(); G.phase = 'resolve';
+  applyHit();
+  if (G.lives <= 0) { setTimeout(showResult, 700); return; }
+  setTimeout(nextRound, 1000);
+}
+
+// ─── Key handler ───
+function onKey(e) {
+  if (G.phase !== 'input') return;
+  const arrow = ARROW_KEYS[e.key];
+  if (!arrow) return;
+  e.preventDefault();
+  if (arrow === G.pattern[G.inputIdx]) {
+    G.inputIdx++;
+    if (G.inputIdx >= G.pattern.length) { onSuccess(); return; }
+    refreshArrows();
+  } else {
+    flash('red', 250);
+    wrongCardAnim();
+    applyHit();
+    if (G.lives <= 0) { stopTimer(); G.phase = 'resolve'; setTimeout(showResult, 700); }
+  }
+}
+
+// ─── Next round ───
+function nextRound() {
+  const p = getDiffParams(G.diff);
+  G.roundTime = p.time;
+  G.pattern   = genPattern(p.len);
+  G.inputIdx  = 0;
+  G.currentAtkSpell = ATK_SPELLS[Math.floor(Math.random() * ATK_SPELLS.length)];
+  document.getElementById('sr-atk-spell-lbl').textContent = 'Death Eater casts: ' + G.currentAtkSpell;
+  buildArrows();
+  launchLoop(p.atkDur);
+  G.phase = 'input';
+  startTimer();
+}
+
+// ─── HUD ───
+function updateHUD() {
+  document.getElementById('sr-score').textContent    = G.score;
+  document.getElementById('sr-combo').textContent    = '×' + G.combo;
+  document.getElementById('sr-combo-disp').textContent = '×' + G.combo;
+}
+function updateLives() {
+  const hearts = document.getElementById('sr-lives').children;
+  for (let i = 0; i < 5; i++)
+    hearts[i].className = 'sr-heart' + (i >= G.lives ? ' lost' : '');
+}
+
+// ─── Result ───
+function showResult() {
+  clearTimeout(projLoopId);
+  document.removeEventListener('keydown', onKey);
+  document.getElementById('sr-game').classList.add('hidden');
+  document.getElementById('sr-result').classList.remove('hidden');
+
+  const dm = Math.min(100, Math.max(0, Math.round(
+    G.score / 20 + G.successBlocks * 3 + G.maxCombo * 2 + G.lives * 5 - G.failedBlocks * 4
+  )));
+  let grade, gc, trait, desc;
+  if      (dm >= 90) { grade='Outstanding';           gc='#f5c842'; trait='⚡ Lightning Reflex';        desc='위기 상황에서도 빠르게 방어 마법을 완성하는 탁월한 재능을 보였습니다.'; }
+  else if (dm >= 75) { grade='Exceeds Expectations';  gc='#a0d0ff'; trait='🛡 Shield Master';           desc='높은 집중력으로 대부분의 공격을 완벽하게 방어해냈습니다.'; }
+  else if (dm >= 60) { grade='Acceptable';             gc='#4aff4a'; trait='✨ Stable Caster';           desc='꾸준한 방어력으로 오래 버텼습니다. 더 빠른 반응이 필요합니다.'; }
+  else               { grade='Needs Practice';         gc='#ff6040'; trait='🌀 Apprentice Witch/Wizard'; desc='죽음을 먹는 자의 공격에 압도당했습니다. 다시 훈련하세요!'; }
+
+  document.getElementById('sr-def-score').innerHTML = `<span style="color:${gc}">${dm}</span>`;
+  document.getElementById('sr-grade-lbl').innerHTML = `<span style="color:${gc}">${grade}</span>`;
+  document.getElementById('sr-trait').textContent = trait;
+  document.getElementById('sr-desc').textContent  = desc;
+
+  const rows = [
+    ['Final Score',       G.score + '점'],
+    ['Successful Blocks', G.successBlocks + '회'],
+    ['Failed Blocks',     G.failedBlocks  + '회'],
+    ['Max Combo',         '×' + G.maxCombo],
+    ['Max Difficulty',    'Lv ' + G.diff],
+    ['남은 목숨',           G.lives + ' / 5'],
+  ];
+  document.getElementById('sr-result-rows').innerHTML =
+    rows.map(([l,v]) => `<div class="sr-row"><span class="sr-rl">${l}</span><span class="sr-rv">${v}</span></div>`).join('');
+}
+
+// ─── Start / Restart ───
+function srStart() {
+  document.getElementById('sr-intro').classList.add('hidden');
+  const gs = document.getElementById('sr-game');
+  gs.classList.remove('hidden'); gs.style.position = 'absolute';
+  Object.assign(G, { lives:5, score:0, combo:1, diff:1, successBlocks:0, failedBlocks:0, maxCombo:1, phase:'idle' });
+  updateHUD(); updateLives();
+  document.getElementById('sr-diff-val').textContent = 1;
+  document.addEventListener('keydown', onKey);
+  setTimeout(nextRound, 400);
+}
+function srRestart() {
+  clearTimeout(projLoopId);
+  document.removeEventListener('keydown', onKey);
+  document.getElementById('sr-result').classList.add('hidden');
+  document.getElementById('sr-game').classList.add('hidden');
+  document.getElementById('sr-intro').classList.remove('hidden');
+  document.getElementById('sr-edge').className = 'sr-edge';
+}
+</script>
+</body>
+</html>
